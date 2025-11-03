@@ -83,7 +83,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                           },
                         ),
                         onPressed: _handleConnection,
-                        icon: Icon(Icons.check, fontWeight: FontWeight.w900),
+                        icon: const Icon(Icons.check),
                       )
                     : FilledButton.icon(
                         key: ValueKey(coreStatus),
@@ -122,13 +122,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                                 backgroundColor: Colors.transparent,
                               ),
                             ),
-                            CoreStatus.connected => Icon(
+                            CoreStatus.connected => const Icon(
                               Icons.check_sharp,
-                              fontWeight: FontWeight.w900,
                             ),
-                            CoreStatus.disconnected => Icon(
+                            CoreStatus.disconnected => const Icon(
                               Icons.restart_alt_sharp,
-                              fontWeight: FontWeight.w900,
                             ),
                           },
                         ),

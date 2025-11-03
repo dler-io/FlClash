@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/window_manager.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 class AppStateManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -196,7 +196,7 @@ class AppSidebarContainer extends ConsumerWidget {
                     if (system.isMacOS) SizedBox(height: 22),
                     SizedBox(height: 10),
                     if (!system.isMacOS) ...[
-                      ClipRect(child: AppIcon()),
+                      AppIcon(),
                       SizedBox(height: 12),
                     ],
                     Expanded(
@@ -207,7 +207,6 @@ class AppSidebarContainer extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: NavigationRail(
-                                scrollable: true,
                                 minExtendedWidth: 200,
                                 backgroundColor: Colors.transparent,
                                 selectedLabelTextStyle: context
@@ -226,7 +225,7 @@ class AppSidebarContainer extends ConsumerWidget {
                                     .map(
                                       (e) => NavigationRailDestination(
                                         icon: e.icon,
-                                        label: Text(Intl.message(e.label.name)),
+                                        label: Text(e.getDisplayLabel(context)),
                                       ),
                                     )
                                     .toList(),

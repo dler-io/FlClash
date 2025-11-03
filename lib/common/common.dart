@@ -6,6 +6,7 @@ export 'constant.dart';
 export 'context.dart';
 export 'converter.dart';
 export 'datetime.dart';
+export 'dler_cloud_api.dart';
 export 'fixed.dart';
 export 'function.dart';
 export 'future.dart';

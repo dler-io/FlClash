@@ -255,7 +255,7 @@ class _WindowHeaderState extends State<WindowHeader> {
             ),
           ),
           if (system.isMacOS)
-            const Text(appName)
+            const Text(appDisplayName)
           else ...[
             Positioned(right: 0, child: _buildActions()),
           ],
@@ -270,17 +270,12 @@ class AppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: ShapeDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
-        shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      ),
-      padding: EdgeInsets.all(8),
-      child: Transform.translate(
-        offset: Offset(0, -1),
-        child: Image.asset('assets/images/icon.png', width: 34, height: 34),
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Image.asset(
+        'assets/images/icon.png',
+        width: 24,
+        height: 24,
       ),
     );
   }

@@ -149,14 +149,22 @@ class Build {
       workingDirectory: workingDirectory,
       runInShell: runInShell,
     );
+    final StringBuffer stdoutBuffer = StringBuffer();
+    final StringBuffer stderrBuffer = StringBuffer();
     process.stdout.listen((data) {
-      print(utf8.decode(data));
+      final output = utf8.decode(data);
+      print(output);
+      stdoutBuffer.write(output);
     });
     process.stderr.listen((data) {
-      print(utf8.decode(data));
+      final output = utf8.decode(data);
+      print(output);
+      stderrBuffer.write(output);
     });
     final exitCode = await process.exitCode;
-    if (exitCode != 0 && name != null) throw '$name error';
+    if (exitCode != 0 && name != null) {
+      throw '$name error (exit code: $exitCode)\nstdout: ${stdoutBuffer.toString()}\nstderr: ${stderrBuffer.toString()}';
+    }
   }
 
   static Future<String> calcSha256(String filePath) async {
@@ -312,6 +320,16 @@ class Build {
       name: 'get distributor',
       Build.getExecutable('dart pub global activate -s path $distributorDir'),
     );
+    
+    // Verify flutter_distributor is available and add pub cache bin to PATH
+    final homeDir = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '';
+    final pubCacheBin = join(homeDir, '.pub-cache', 'bin');
+    if (Directory(pubCacheBin).existsSync()) {
+      final currentPath = Platform.environment['PATH'] ?? '';
+      if (!currentPath.contains(pubCacheBin)) {
+        Platform.environment['PATH'] = '$pubCacheBin${Platform.isWindows ? ';' : ':'}$currentPath';
+      }
+    }
   }
 
   static void copyFile(String sourceFilePath, String destinationFilePath) {
@@ -409,12 +427,51 @@ class BuildCommand extends Command {
     required String env,
   }) async {
     await Build.getDistributor();
-    await Build.exec(
-      name: name,
-      Build.getExecutable(
-        'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose$args --build-dart-define=APP_ENV=$env',
-      ),
-    );
+    // Try flutter_distributor directly first, fallback to dart pub global run
+    final Map<String, String> envVars = Map.from(Platform.environment);
+    final homeDir = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '';
+    final pubCacheBin = join(homeDir, '.pub-cache', 'bin');
+    if (Directory(pubCacheBin).existsSync()) {
+      final currentPath = envVars['PATH'] ?? '';
+      if (!currentPath.contains(pubCacheBin)) {
+        envVars['PATH'] = '$pubCacheBin${Platform.isWindows ? ';' : ':'}$currentPath';
+      }
+    }
+    
+    // Build command with proper argument separation
+    // args may contain additional arguments like --description, --build-target-platform, etc.
+    // These should be separate arguments, not part of --flutter-build-args
+    final command = 'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose --build-dart-define=APP_ENV=$env$args';
+    try {
+      await Build.exec(
+        name: name,
+        Build.getExecutable(command),
+        environment: envVars,
+      );
+    } catch (e) {
+      // Fallback to dart pub global run if direct command fails
+      print('Direct flutter_distributor command failed, trying dart pub global run...');
+      final fallbackCommand = 'dart pub global run flutter_distributor:main package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose --build-dart-define=APP_ENV=$env$args';
+      await Build.exec(
+        name: name,
+        Build.getExecutable(fallbackCommand),
+        environment: envVars,
+      );
+    }
+    
+    // Verify that output files were created
+    final distDir = Directory(distPath);
+    if (!distDir.existsSync()) {
+      throw 'Build completed but dist/ directory does not exist!';
+    }
+    final files = distDir
+        .listSync(recursive: true)
+        .where((entity) => entity is File)
+        .toList();
+    if (files.isEmpty) {
+      throw 'Build completed but no files found in dist/ directory! Check build logs for errors.';
+    }
+    print('✓ Build successful: Found ${files.length} file(s) in dist/ directory');
   }
 
   Future<String?> get systemArch async {

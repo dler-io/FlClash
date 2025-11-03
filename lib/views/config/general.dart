@@ -51,7 +51,7 @@ class UaItem extends ConsumerWidget {
       subtitle: Text(globalUa ?? appLocalizations.defaultText),
       delegate: OptionsDelegate<String?>(
         title: 'UA',
-        options: [null, 'clash-verge/v2.4.2', 'ClashforWindows/0.19.23'],
+        options: [null, 'dler-io', 'clash-verge/v2.4.2', 'ClashforWindows/0.19.23'],
         value: globalUa,
         onChanged: (value) {
           ref

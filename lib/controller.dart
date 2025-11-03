@@ -480,27 +480,21 @@ class AppController {
     bool handleError = false,
   }) async {
     if (data != null) {
-      final tagName = data['tag_name'];
-      final body = data['body'];
-      final submits = utils.parseReleaseBody(body);
+      final version = data['version'] as String?;
+      if (version == null) return;
       final textTheme = context.textTheme;
       final res = await globalState.showMessage(
         title: appLocalizations.discoverNewVersion,
         message: TextSpan(
-          text: '$tagName \n',
+          text: 'v$version',
           style: textTheme.headlineSmall,
-          children: [
-            TextSpan(text: '\n', style: textTheme.bodyMedium),
-            for (final submit in submits)
-              TextSpan(text: '- $submit \n', style: textTheme.bodyMedium),
-          ],
         ),
         confirmText: appLocalizations.goDownload,
       );
       if (res != true) {
         return;
       }
-      launchUrl(Uri.parse('https://github.com/$repository/releases/latest'));
+      launchUrl(Uri.parse('https://dlercloud.com/client'));
     } else if (handleError) {
       globalState.showMessage(
         title: appLocalizations.checkUpdate,
@@ -698,12 +692,53 @@ class AppController {
 
     final profile = await safeRun(
       () async {
-        return await Profile.normal(url: url).update();
+        final existingProfiles = _ref.read(profilesProvider);
+        
+        if (url.contains('dler.cloud')) {
+          final dlerCloudProfiles = existingProfiles.where(
+            (p) => p.url.contains('dler.cloud'),
+          ).toList();
+          
+          final sameUrlProfile = dlerCloudProfiles.firstWhere(
+            (p) => p.url == url,
+            orElse: () => Profile.normal(url: ''),
+          );
+          
+          Profile profileToUpdate;
+          if (sameUrlProfile.url == url) {
+            profileToUpdate = sameUrlProfile;
+          } else if (dlerCloudProfiles.isNotEmpty) {
+            profileToUpdate = dlerCloudProfiles.first.copyWith(url: url);
+            for (int i = 1; i < dlerCloudProfiles.length; i++) {
+              await deleteProfile(dlerCloudProfiles[i].id);
+            }
+          } else {
+            profileToUpdate = Profile.normal(url: url);
+          }
+          
+          final updatedProfile = await profileToUpdate.update();
+          _ref.read(profilesProvider.notifier).setProfile(updatedProfile);
+          _ref.read(currentProfileIdProvider.notifier).value = updatedProfile.id;
+          await applyProfile(silence: true);
+          
+          return updatedProfile;
+        }
+        
+        final existingProfile = existingProfiles.firstWhere(
+          (p) => p.url == url,
+          orElse: () => Profile.normal(url: ''),
+        );
+
+        final profileToUpdate = existingProfile.url == url
+            ? existingProfile
+            : Profile.normal(url: url);
+
+        return await profileToUpdate.update();
       },
       needLoading: true,
       title: '${appLocalizations.add}${appLocalizations.profile}',
     );
-    if (profile != null) {
+    if (profile != null && !url.contains('dler.cloud')) {
       await addProfile(profile);
     }
   }

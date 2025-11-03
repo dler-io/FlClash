@@ -5,6 +5,7 @@ import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/card.dart';
+import 'package:fl_clash/widgets/effect.dart';
 import 'package:fl_clash/widgets/input.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/null_status.dart';

@@ -29,14 +29,15 @@ class ToolsView extends ConsumerStatefulWidget {
 
 class _ToolViewState extends ConsumerState<ToolsView> {
   Widget _buildNavigationMenuItem(NavigationItem navigationItem) {
+    final labelText = navigationItem.getDisplayLabel(context);
     return ListItem.open(
       leading: navigationItem.icon,
-      title: Text(Intl.message(navigationItem.label.name)),
+      title: Text(labelText),
       subtitle: navigationItem.description != null
           ? Text(Intl.message(navigationItem.description!))
           : null,
       delegate: OpenDelegate(
-        title: Intl.message(navigationItem.label.name),
+        title: labelText,
         widget: navigationItem.builder(context),
         wrap: false,
       ),

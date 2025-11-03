@@ -59,17 +59,17 @@ class Request {
 
   Future<Map<String, dynamic>?> checkForUpdate() async {
     final response = await dio.get(
-      'https://api.github.com/repos/$repository/releases/latest',
+      'https://dler.cloud/download/flclash.json',
       options: Options(responseType: ResponseType.json),
     );
     if (response.statusCode != 200) return null;
     final data = response.data as Map<String, dynamic>;
-    final remoteVersion = data['tag_name'];
+    final remoteVersion = data['version'] as String?;
+    if (remoteVersion == null) return null;
     final version = globalState.packageInfo.version;
-    final hasUpdate =
-        utils.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
+    final hasUpdate = utils.compareVersions(remoteVersion, version) > 0;
     if (!hasUpdate) return null;
-    return data;
+    return {'version': remoteVersion};
   }
 
   final Map<String, IpInfo Function(Map<String, dynamic>)> _ipInfoSources = {
